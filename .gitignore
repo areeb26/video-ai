@@ -21,6 +21,7 @@ ENV/
 out/
 build/
 dist/
+*.tsbuildinfo
 
 # Database
 *.db
