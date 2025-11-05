@@ -6,8 +6,10 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql://user:password@localhost:5432/video_ai_db"
 
-    # Google AI
-    GOOGLE_AI_API_KEY: str
+    # Google AI / Veo Configuration
+    GOOGLE_AI_API_KEY: str = ""
+    GOOGLE_AI_BEARER_TOKEN: str = ""  # OAuth bearer token for Veo 3.1
+    VEO_PROJECT_ID: str = ""  # Your Google project ID
 
     # Application
     SECRET_KEY: str = "your-secret-key-change-this"

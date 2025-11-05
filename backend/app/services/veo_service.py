@@ -1,16 +1,16 @@
-import google.genai as genai
-from google.genai import types
+import httpx
 from typing import Optional, Dict, Any
-import asyncio
-import os
+import random
 from ..core.config import settings
 
 
 class VeoService:
-    """Service for interacting with Google Veo 3.1 API"""
+    """Service for interacting with Google Veo 3.1 API (Google AI Sandbox)"""
 
     def __init__(self):
-        self.client = genai.Client(api_key=settings.GOOGLE_AI_API_KEY)
+        self.api_url = "https://aisandbox-pa.googleapis.com/v1/video:batchAsyncGenerateVideoText"
+        self.bearer_token = settings.GOOGLE_AI_BEARER_TOKEN or settings.GOOGLE_AI_API_KEY
+        self.project_id = settings.VEO_PROJECT_ID or "default-project-id"
 
     async def generate_video(
         self,
@@ -45,41 +45,94 @@ class VeoService:
 
             # Map aspect ratio to Veo format
             aspect_ratio_map = {
-                "9:16": "9:16",
-                "1:1": "1:1",
-                "16:9": "16:9",
-                "4:5": "4:5",
+                "9:16": "VIDEO_ASPECT_RATIO_PORTRAIT",
+                "1:1": "VIDEO_ASPECT_RATIO_SQUARE",
+                "16:9": "VIDEO_ASPECT_RATIO_LANDSCAPE",
+                "4:5": "VIDEO_ASPECT_RATIO_PORTRAIT",
             }
 
-            # Prepare generation config
-            config = {
-                "prompt": enhanced_prompt,
-                "aspect_ratio": aspect_ratio_map.get(aspect_ratio, "16:9"),
-            }
-
-            # Add quality settings
-            if quality == "high":
-                config["quality"] = "4k"
-            else:
-                config["quality"] = "preview"
-
-            # Handle different generation types
+            # Determine model key based on quality and generation type
             if input_video:
-                # Video-to-video
-                response = await self._generate_video_to_video(config, input_video)
+                model_key = "veo_3_1_v2v_fast_ultra" if quality == "high" else "veo_3_1_v2v_fast_ultra"
             elif input_image:
-                # Image-to-video
-                response = await self._generate_image_to_video(config, input_image)
+                model_key = "veo_3_1_i2v_fast_ultra" if quality == "high" else "veo_3_1_i2v_fast_ultra"
             else:
-                # Text-to-video
-                response = await self._generate_text_to_video(config)
+                model_key = "veo_3_1_t2v_fast_ultra"
+
+            # Generate random seed for reproducibility
+            seed = random.randint(10000, 99999)
+
+            # Build request body in Google AI Sandbox format
+            request_body = {
+                "clientContext": {
+                    "projectId": self.project_id,
+                    "tool": "PINHOLE",
+                    "userPaygateTier": "PAYGATE_TIER_TWO"  # Ultra account
+                },
+                "requests": [
+                    {
+                        "aspectRatio": aspect_ratio_map.get(aspect_ratio, "VIDEO_ASPECT_RATIO_LANDSCAPE"),
+                        "seed": seed,
+                        "textInput": {
+                            "prompt": enhanced_prompt
+                        },
+                        "videoModelKey": model_key,
+                        "metadata": {
+                            "sceneId": f"scene-{seed}"
+                        }
+                    }
+                ]
+            }
+
+            # Add image input if provided
+            if input_image:
+                # TODO: Add image input format for i2v
+                pass
+
+            # Add video input if provided
+            if input_video:
+                # TODO: Add video input format for v2v
+                pass
+
+            # Make API request
+            headers = {
+                "Authorization": f"Bearer {self.bearer_token}",
+                "Content-Type": "application/json"
+            }
+
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    self.api_url,
+                    json=request_body,
+                    headers=headers
+                )
+
+                if response.status_code != 200:
+                    error_detail = response.text
+                    return {
+                        "success": False,
+                        "error": f"API request failed: {response.status_code} - {error_detail}",
+                    }
+
+                response_data = response.json()
+
+            # Extract job ID and status from response
+            job_id = None
+            if "responses" in response_data and len(response_data["responses"]) > 0:
+                first_response = response_data["responses"][0]
+                # The response may contain operation info
+                if "name" in first_response:
+                    job_id = first_response["name"]
+                elif "metadata" in first_response:
+                    job_id = first_response["metadata"].get("name")
 
             return {
                 "success": True,
-                "job_id": response.get("job_id"),
-                "status": response.get("status"),
-                "video_url": response.get("video_url"),
-                "response": response,
+                "job_id": job_id or f"veo-{seed}",
+                "status": "processing",
+                "video_url": None,  # Will be available when job completes
+                "seed": seed,
+                "response": response_data,
             }
 
         except Exception as e:
@@ -87,81 +140,6 @@ class VeoService:
                 "success": False,
                 "error": str(e),
             }
-
-    async def _generate_text_to_video(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate video from text prompt"""
-        try:
-            # Use the Veo 3 model
-            response = self.client.models.generate_video(
-                model="veo-3",
-                prompt=config["prompt"],
-                config={
-                    "aspect_ratio": config["aspect_ratio"],
-                }
-            )
-
-            return {
-                "job_id": getattr(response, "id", None),
-                "status": "processing",
-                "video_url": getattr(response, "video_url", None),
-            }
-
-        except Exception as e:
-            raise Exception(f"Text-to-video generation failed: {str(e)}")
-
-    async def _generate_image_to_video(
-        self, config: Dict[str, Any], image_path: str
-    ) -> Dict[str, Any]:
-        """Generate video from image + prompt"""
-        try:
-            # Read image file
-            with open(image_path, "rb") as f:
-                image_data = f.read()
-
-            response = self.client.models.generate_video(
-                model="veo-3",
-                prompt=config["prompt"],
-                image=image_data,
-                config={
-                    "aspect_ratio": config["aspect_ratio"],
-                }
-            )
-
-            return {
-                "job_id": getattr(response, "id", None),
-                "status": "processing",
-                "video_url": getattr(response, "video_url", None),
-            }
-
-        except Exception as e:
-            raise Exception(f"Image-to-video generation failed: {str(e)}")
-
-    async def _generate_video_to_video(
-        self, config: Dict[str, Any], video_path: str
-    ) -> Dict[str, Any]:
-        """Generate video from video + prompt"""
-        try:
-            # Read video file
-            with open(video_path, "rb") as f:
-                video_data = f.read()
-
-            response = self.client.models.generate_video(
-                model="veo-3",
-                prompt=config["prompt"],
-                video=video_data,
-                config={
-                    "aspect_ratio": config["aspect_ratio"],
-                }
-            )
-
-            return {
-                "job_id": getattr(response, "id", None),
-                "status": "processing",
-                "video_url": getattr(response, "video_url", None),
-            }
-
-        except Exception as e:
-            raise Exception(f"Video-to-video generation failed: {str(e)}")
 
     def _enhance_prompt(
         self,
@@ -201,14 +179,15 @@ class VeoService:
     async def check_generation_status(self, job_id: str) -> Dict[str, Any]:
         """Check the status of a video generation job"""
         try:
-            # Poll for job status
-            response = self.client.models.get_generation(job_id)
+            # TODO: Implement status checking endpoint
+            # The actual endpoint for checking status may be different
+            # For now, return a placeholder response
 
             return {
                 "success": True,
-                "status": getattr(response, "status", "unknown"),
-                "video_url": getattr(response, "video_url", None),
-                "response": response,
+                "status": "processing",  # or "completed", "failed"
+                "video_url": None,
+                "response": {},
             }
 
         except Exception as e:

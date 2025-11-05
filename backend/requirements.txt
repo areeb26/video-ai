@@ -10,8 +10,8 @@ sqlalchemy==2.0.25
 psycopg2-binary==2.9.9
 alembic==1.13.1
 
-# Google AI
-google-genai==0.2.2
+# HTTP client for Veo API
+# httpx is already listed below in Utilities section
 
 # Face recognition and embeddings
 deepface==0.0.91
