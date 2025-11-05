@@ -1,0 +1,20 @@
+{
+  "clientContext": {
+    "projectId": "b4aac356-f762-46e3-99dc-0feee5c15e8f",
+    "tool": "PINHOLE",
+    "userPaygateTier": "PAYGATE_TIER_TWO"
+  },
+  "requests": [
+    {
+      "aspectRatio": "VIDEO_ASPECT_RATIO_LANDSCAPE",
+      "seed": 17274,
+      "textInput": {
+        "prompt": "{{PROMPT}}"
+      },
+      "videoModelKey": "veo_3_1_t2v_fast_ultra",
+      "metadata": {
+        "sceneId": "d4cb909e-26e9-4032-8223-600a687f541a"
+      }
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 import httpx
 from typing import Optional, Dict, Any
 import random
+import json
+import os
 from ..core.config import settings
 
 
@@ -10,7 +12,15 @@ class VeoService:
     def __init__(self):
         self.api_url = "https://aisandbox-pa.googleapis.com/v1/video:batchAsyncGenerateVideoText"
         self.bearer_token = settings.GOOGLE_AI_BEARER_TOKEN or settings.GOOGLE_AI_API_KEY
-        self.project_id = settings.VEO_PROJECT_ID or "default-project-id"
+
+        # Load request template from JSON file
+        template_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "veo_request_template.json"
+        )
+
+        with open(template_path, 'r') as f:
+            self.request_template = json.load(f)
 
     async def generate_video(
         self,
@@ -53,46 +63,36 @@ class VeoService:
 
             # Determine model key based on quality and generation type
             if input_video:
-                model_key = "veo_3_1_v2v_fast_ultra" if quality == "high" else "veo_3_1_v2v_fast_ultra"
+                model_key = "veo_3_1_v2v_fast_ultra"
             elif input_image:
-                model_key = "veo_3_1_i2v_fast_ultra" if quality == "high" else "veo_3_1_i2v_fast_ultra"
+                model_key = "veo_3_1_i2v_fast_ultra"
             else:
                 model_key = "veo_3_1_t2v_fast_ultra"
 
             # Generate random seed for reproducibility
             seed = random.randint(10000, 99999)
 
-            # Build request body in Google AI Sandbox format
-            request_body = {
-                "clientContext": {
-                    "projectId": self.project_id,
-                    "tool": "PINHOLE",
-                    "userPaygateTier": "PAYGATE_TIER_TWO"  # Ultra account
-                },
-                "requests": [
-                    {
-                        "aspectRatio": aspect_ratio_map.get(aspect_ratio, "VIDEO_ASPECT_RATIO_LANDSCAPE"),
-                        "seed": seed,
-                        "textInput": {
-                            "prompt": enhanced_prompt
-                        },
-                        "videoModelKey": model_key,
-                        "metadata": {
-                            "sceneId": f"scene-{seed}"
-                        }
-                    }
-                ]
-            }
+            # Load and customize request template
+            request_body = json.loads(json.dumps(self.request_template))  # Deep copy
 
-            # Add image input if provided
-            if input_image:
-                # TODO: Add image input format for i2v
-                pass
+            # Replace placeholders in the template
+            request_str = json.dumps(request_body)
+            request_str = request_str.replace("{{PROMPT}}", enhanced_prompt)
+            request_str = request_str.replace("{{ASPECT_RATIO}}", aspect_ratio_map.get(aspect_ratio, "VIDEO_ASPECT_RATIO_LANDSCAPE"))
+            request_str = request_str.replace("{{SEED}}", str(seed))
+            request_str = request_str.replace("{{MODEL_KEY}}", model_key)
+            request_str = request_str.replace("{{SCENE_ID}}", f"scene-{seed}")
+            request_body = json.loads(request_str)
 
-            # Add video input if provided
-            if input_video:
-                # TODO: Add video input format for v2v
-                pass
+            # Override seed in requests if it exists in template
+            if "requests" in request_body and len(request_body["requests"]) > 0:
+                request_body["requests"][0]["seed"] = seed
+                request_body["requests"][0]["videoModelKey"] = model_key
+                request_body["requests"][0]["aspectRatio"] = aspect_ratio_map.get(aspect_ratio, "VIDEO_ASPECT_RATIO_LANDSCAPE")
+                if "textInput" in request_body["requests"][0]:
+                    request_body["requests"][0]["textInput"]["prompt"] = enhanced_prompt
+                if "metadata" in request_body["requests"][0]:
+                    request_body["requests"][0]["metadata"]["sceneId"] = f"scene-{seed}"
 
             # Make API request
             headers = {
@@ -133,6 +133,7 @@ class VeoService:
                 "video_url": None,  # Will be available when job completes
                 "seed": seed,
                 "response": response_data,
+                "request_sent": request_body,  # Include for debugging
             }
 
         except Exception as e:
