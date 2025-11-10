@@ -94,6 +94,17 @@ class Settings(BaseSettings):
     VOICE_PHRASE_TIME_LIMIT: int = 10  # Maximum phrase duration
     VOICE_AUTO_CALIBRATE: bool = True  # Auto-calibrate microphone on startup
 
+    # Smart Learning & Personalization
+    LEARNING_ENABLED: bool = True  # Enable smart learning features
+    LEARNING_MIN_PATTERN_OCCURRENCES: int = 3  # Minimum occurrences to detect pattern
+    LEARNING_CONFIDENCE_THRESHOLD: float = 0.6  # Minimum confidence for patterns
+    LEARNING_HABIT_THRESHOLD: float = 0.7  # Minimum confidence to save as habit
+    LEARNING_AUTO_LEARN: bool = True  # Automatically learn from user actions
+    LEARNING_CONTEXT_WINDOW: int = 10  # Number of previous conversations to consider
+    LEARNING_CONTEXT_TIMEOUT_MINUTES: int = 30  # Context expires after minutes
+    LEARNING_PREDICTION_LIMIT: int = 5  # Max number of predictions to show
+    LEARNING_VOICE_RECOGNITION_THRESHOLD: float = 0.75  # Min confidence for voice recognition
+
     class Config:
         env_file = "ai-assistant/.env"
         case_sensitive = True
