@@ -81,6 +81,19 @@ class Settings(BaseSettings):
     WHATSAPP_AUTO_START_QUEUE: bool = False  # Auto-start queue worker on startup
     WHATSAPP_AUTHORIZED_NUMBERS: List[str] = []  # List of authorized numbers
 
+    # Voice Integration
+    VOICE_ENABLED: bool = True
+    VOICE_WAKE_WORD_REQUIRED: bool = True  # Require wake word before commands
+    VOICE_WAKE_WORDS: List[str] = ["hey assistant", "اے اسسٹنٹ"]  # Custom wake words
+    VOICE_CONTINUOUS_MODE: bool = False  # Continue listening after command
+    VOICE_RESPONSE_ENABLED: bool = True  # Enable voice responses
+    VOICE_SPEECH_RATE: int = 150  # Speech rate (words per minute)
+    VOICE_VOLUME: float = 0.9  # Volume level (0.0 to 1.0)
+    VOICE_ENERGY_THRESHOLD: int = 4000  # Microphone energy threshold
+    VOICE_TIMEOUT: int = 5  # Listening timeout in seconds
+    VOICE_PHRASE_TIME_LIMIT: int = 10  # Maximum phrase duration
+    VOICE_AUTO_CALIBRATE: bool = True  # Auto-calibrate microphone on startup
+
     class Config:
         env_file = "ai-assistant/.env"
         case_sensitive = True
