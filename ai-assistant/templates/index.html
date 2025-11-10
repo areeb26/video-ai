@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Multitask Assistant - مددگار AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Noto Nastaliq Urdu';
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .language-toggle {
+            margin-top: 20px;
+        }
+
+        .language-toggle button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 8px 20px;
+            margin: 0 5px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .language-toggle button:hover,
+        .language-toggle button.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .chat-container {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f9f9f9;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.assistant {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-area button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .input-area button:hover {
+            transform: translateY(-2px);
+        }
+
+        .input-area button:active {
+            transform: translateY(0);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .feature h3 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .urdu {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .links {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Multitask Assistant</h1>
+            <p id="subtitle">Your intelligent bilingual assistant for multitasking and automation</p>
+            <div class="language-toggle">
+                <button onclick="setLanguage('en')" class="active" id="btn-en">English</button>
+                <button onclick="setLanguage('ur')" id="btn-ur">اردو</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="chat-container" id="chatContainer">
+                <div class="message assistant">
+                    <div id="welcomeMessage">
+                        Hello! I'm your AI assistant. I can help you with tasks, files, and automation. Try commands like:
+                        <ul>
+                            <li>"Create a task to buy groceries tomorrow"</li>
+                            <li>"List my tasks"</li>
+                            <li>"Create a file called notes.txt"</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Type your command here..."
+                       onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()" id="sendBtn">Send</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <p>Processing...</p>
+            </div>
+
+            <div class="features" id="features">
+                <div class="feature">
+                    <h3>📝 Tasks</h3>
+                    <p>Create and manage tasks</p>
+                </div>
+                <div class="feature">
+                    <h3>📁 Files</h3>
+                    <p>File operations</p>
+                </div>
+                <div class="feature">
+                    <h3>⚡ N8N</h3>
+                    <p>Workflow automation</p>
+                </div>
+                <div class="feature">
+                    <h3>🌐 Bilingual</h3>
+                    <p>English & Urdu</p>
+                </div>
+            </div>
+
+            <div class="links">
+                <a href="/docs" target="_blank">📚 API Docs</a>
+                <a href="/redoc" target="_blank">📖 ReDoc</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLanguage = 'en';
+
+        const translations = {
+            en: {
+                subtitle: 'Your intelligent bilingual assistant for multitasking and automation',
+                placeholder: 'Type your command here...',
+                sendBtn: 'Send',
+                welcomeMessage: `Hello! I'm your AI assistant. I can help you with tasks, files, and automation. Try commands like:
+                    <ul>
+                        <li>"Create a task to buy groceries tomorrow"</li>
+                        <li>"List my tasks"</li>
+                        <li>"Create a file called notes.txt"</li>
+                    </ul>`,
+                processing: 'Processing...'
+            },
+            ur: {
+                subtitle: 'آپ کا ذہین دو لسانی معاون کثیر کاموں اور آٹومیشن کے لیے',
+                placeholder: 'اپنا حکم یہاں لکھیں...',
+                sendBtn: 'بھیجیں',
+                welcomeMessage: `سلام! میں آپ کا AI معاون ہوں۔ میں کاموں، فائلوں اور آٹومیشن میں مدد کر سکتا ہوں۔ کمانڈز آزمائیں:
+                    <ul style="text-align: right;">
+                        <li>"کل گروسری خریدنے کا کام بنائیں"</li>
+                        <li>"میرے کام دکھائیں"</li>
+                        <li>"notes.txt نام کی فائل بنائیں"</li>
+                    </ul>`,
+                processing: 'پروسیسنگ...'
+            }
+        };
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            document.getElementById('subtitle').textContent = translations[lang].subtitle;
+            document.getElementById('messageInput').placeholder = translations[lang].placeholder;
+            document.getElementById('sendBtn').textContent = translations[lang].sendBtn;
+            document.getElementById('welcomeMessage').innerHTML = translations[lang].welcomeMessage;
+            document.getElementById('loading').querySelector('p').textContent = translations[lang].processing;
+
+            // Update active button
+            document.getElementById('btn-en').classList.remove('active');
+            document.getElementById('btn-ur').classList.remove('active');
+            document.getElementById(`btn-${lang}`).classList.add('active');
+
+            // Update direction
+            if (lang === 'ur') {
+                document.getElementById('messageInput').style.direction = 'rtl';
+                document.getElementById('messageInput').style.textAlign = 'right';
+            } else {
+                document.getElementById('messageInput').style.direction = 'ltr';
+                document.getElementById('messageInput').style.textAlign = 'left';
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+
+            try {
+                const response = await fetch('/api/v1/assistant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        language: currentLanguage
+                    })
+                });
+
+                const data = await response.json();
+
+                // Add assistant response
+                addMessage(data.message, 'assistant');
+
+                // If there are actions, show them
+                if (data.actions && data.actions.length > 0) {
+                    const actionsHtml = data.actions.map(action =>
+                        `<small>✓ ${action.action}</small>`
+                    ).join('<br>');
+                    addMessage(actionsHtml, 'assistant');
+                }
+
+            } catch (error) {
+                addMessage('Error: ' + error.message, 'assistant');
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        function addMessage(text, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            if (currentLanguage === 'ur' && sender === 'user') {
+                messageDiv.classList.add('urdu');
+            }
+            messageDiv.innerHTML = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>

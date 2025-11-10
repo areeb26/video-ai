@@ -1,0 +1,85 @@
+"""
+AI Assistant Configuration
+Manages environment variables and application settings
+"""
+from pydantic_settings import BaseSettings
+from typing import List
+import os
+
+
+class Settings(BaseSettings):
+    """Application settings and configuration"""
+
+    # Application
+    APP_NAME: str = "AI Multitask Assistant"
+    APP_VERSION: str = "1.0.0"
+    DEBUG: bool = True
+    HOST: str = "0.0.0.0"
+    PORT: int = 8001
+
+    # Security
+    SECRET_KEY: str = "change-this-secret-key-in-production"
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8001"]
+
+    # Database
+    DATABASE_PATH: str = "ai-assistant/database/assistant.db"
+
+    # N8N Integration
+    N8N_WEBHOOK_URL: str = "http://localhost:5678/webhook"
+    N8N_API_URL: str = "http://localhost:5678/api/v1"
+    N8N_API_KEY: str = ""
+
+    # Language Settings
+    DEFAULT_LANGUAGE: str = "en"  # en or ur
+    SUPPORTED_LANGUAGES: List[str] = ["en", "ur"]
+
+    # File Operations
+    WORKSPACE_DIR: str = os.path.expanduser("~/ai-assistant-workspace")
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    ALLOWED_FILE_EXTENSIONS: List[str] = [
+        ".txt", ".md", ".json", ".csv", ".pdf",
+        ".doc", ".docx", ".py", ".js", ".html", ".css"
+    ]
+
+    # System Commands
+    ENABLE_SYSTEM_COMMANDS: bool = True
+    SAFE_COMMANDS: List[str] = [
+        "ls", "pwd", "date", "whoami", "cat", "echo",
+        "mkdir", "touch", "cp", "mv", "grep", "find"
+    ]
+    BLOCKED_COMMANDS: List[str] = [
+        "rm -rf", "sudo", "shutdown", "reboot",
+        "mkfs", "dd", "chmod 777", "> /dev/sda"
+    ]
+
+    # Task Management
+    TASK_REMINDER_INTERVAL: int = 3600  # seconds
+    MAX_TASKS_PER_USER: int = 100
+
+    # Email Settings (optional)
+    SMTP_SERVER: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+
+    # Calendar Integration (optional)
+    CALENDAR_PROVIDER: str = "google"  # google, outlook, etc.
+    CALENDAR_API_KEY: str = ""
+
+    # AI/NLP Settings
+    USE_LOCAL_NLP: bool = True
+    OPENAI_API_KEY: str = ""  # Optional for enhanced NLP
+
+    class Config:
+        env_file = "ai-assistant/.env"
+        case_sensitive = True
+
+
+# Global settings instance
+settings = Settings()
+
+
+# Create workspace directory if it doesn't exist
+os.makedirs(settings.WORKSPACE_DIR, exist_ok=True)
+os.makedirs(os.path.dirname(settings.DATABASE_PATH), exist_ok=True)

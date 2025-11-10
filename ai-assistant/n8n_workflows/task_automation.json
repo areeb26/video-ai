@@ -1,0 +1,147 @@
+{
+  "name": "AI Assistant - Task Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "task-created",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-task-created",
+      "name": "Webhook - Task Created",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "task-created"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "task_title",
+              "value": "={{ $json.data.title }}"
+            },
+            {
+              "name": "task_priority",
+              "value": "={{ $json.data.priority }}"
+            },
+            {
+              "name": "due_date",
+              "value": "={{ $json.data.due_date }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-task-data",
+      "name": "Extract Task Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.task_priority }}",
+              "operation": "equals",
+              "value2": "urgent"
+            }
+          ]
+        }
+      },
+      "id": "check-if-urgent",
+      "name": "Is Urgent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "assistant@example.com",
+        "toEmail": "user@example.com",
+        "subject": "🚨 Urgent Task Created",
+        "text": "An urgent task has been created:\n\nTitle: {{ $json.task_title }}\nDue: {{ $json.due_date }}\n\nPlease address this as soon as possible.",
+        "options": {}
+      },
+      "id": "send-urgent-email",
+      "name": "Send Urgent Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Task automation triggered\" } }}"
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Task Created": {
+      "main": [
+        [
+          {
+            "node": "Extract Task Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Task Data": {
+      "main": [
+        [
+          {
+            "node": "Is Urgent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Urgent?": {
+      "main": [
+        [
+          {
+            "node": "Send Urgent Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Urgent Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": ["ai-assistant", "tasks", "automation"],
+  "triggerCount": 1,
+  "updatedAt": "2025-11-10T00:00:00.000Z",
+  "versionId": "1"
+}

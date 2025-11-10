@@ -1,0 +1,115 @@
+{
+  "name": "AI Assistant - Email Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-email",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-send-email",
+      "name": "Webhook - Send Email",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "send-email"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "recipient",
+              "value": "={{ $json.data.recipient }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ $json.data.subject }}"
+            },
+            {
+              "name": "body",
+              "value": "={{ $json.data.body }}"
+            },
+            {
+              "name": "language",
+              "value": "={{ $json.language }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-email-data",
+      "name": "Extract Email Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "assistant@example.com",
+        "toEmail": "={{ $json.recipient }}",
+        "subject": "={{ $json.subject }}",
+        "text": "={{ $json.body }}\n\n---\nSent by AI Multitask Assistant",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": $json.language === 'ur' ? 'ای میل بھیج دی گئی' : 'Email sent successfully' } }}"
+      },
+      "id": "respond-success",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Send Email": {
+      "main": [
+        [
+          {
+            "node": "Extract Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Data": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": ["ai-assistant", "email", "automation"],
+  "triggerCount": 1,
+  "updatedAt": "2025-11-10T00:00:00.000Z",
+  "versionId": "1"
+}
