@@ -1,0 +1,149 @@
+{
+  "name": "WhatsApp - Daily Task Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-daily-9am",
+      "name": "Schedule - Daily 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:8001/api/v1/tasks?status=pending",
+        "authentication": "none",
+        "options": {}
+      },
+      "id": "get-pending-tasks",
+      "name": "Get Pending Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.length }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "check-has-tasks",
+      "name": "Has Pending Tasks?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const tasks = $input.all()[0].json;\n\nlet messageEn = \"*Daily Task Reminder*\\n\\nYou have \" + tasks.length + \" pending tasks:\\n\\n\";\nlet messageUr = \"*روزانہ کام کی یاد دہانی*\\n\\nآپ کے \" + tasks.length + \" زیر التوا کام ہیں:\\n\\n\";\n\nfor (let i = 0; i < Math.min(tasks.length, 10); i++) {\n  const task = tasks[i];\n  messageEn += (i + 1) + \". \" + task.title + \"\\n\";\n  messageUr += (i + 1) + \". \" + task.title + \"\\n\";\n}\n\nreturn [\n  { messageEn, messageUr, taskCount: tasks.length }\n];"
+      },
+      "id": "format-task-message",
+      "name": "Format Task Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8001/api/v1/whatsapp/send",
+        "authentication": "none",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "+923001234567"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.messageEn }}"
+            },
+            {
+              "name": "language",
+              "value": "en"
+            },
+            {
+              "name": "method",
+              "value": "selenium"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-reminder-whatsapp",
+      "name": "Send Reminder via WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1050, 200]
+    }
+  ],
+  "connections": {
+    "Schedule - Daily 9 AM": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Tasks": {
+      "main": [
+        [
+          {
+            "node": "Has Pending Tasks?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Pending Tasks?": {
+      "main": [
+        [
+          {
+            "node": "Format Task Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Task Message": {
+      "main": [
+        [
+          {
+            "node": "Send Reminder via WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": ["ai-assistant", "whatsapp", "tasks", "reminders"],
+  "triggerCount": 1,
+  "updatedAt": "2025-11-10T00:00:00.000Z",
+  "versionId": "1"
+}

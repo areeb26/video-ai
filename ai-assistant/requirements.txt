@@ -18,6 +18,11 @@ httpx==0.26.0
 python-dotenv==1.0.0
 aiofiles==23.2.1
 
+# WhatsApp Integration
+selenium==4.15.2
+webdriver-manager==4.0.1
+pywhatkit==5.4
+
 # CLI (Optional)
 click==8.1.7
 rich==13.7.0

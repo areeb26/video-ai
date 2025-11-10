@@ -109,6 +109,22 @@ class BilingualNLPProcessor:
                 {"pattern": r"تلاش\s+کریں\s+(.+)", "lang": "ur"},
                 {"pattern": r"ڈھونڈیں\s+(.+)", "lang": "ur"},
             ],
+            "send_whatsapp": [
+                # English
+                {"pattern": r"send\s+(?:a\s+)?whatsapp\s+(?:message\s+)?to\s+(.+)", "lang": "en"},
+                {"pattern": r"whatsapp\s+(.+)", "lang": "en"},
+                {"pattern": r"message\s+(.+)\s+on\s+whatsapp", "lang": "en"},
+                # Urdu
+                {"pattern": r"واٹس\s*ایپ\s+(?:پیغام\s+)?بھیجیں\s+(.+)", "lang": "ur"},
+                {"pattern": r"واٹس\s*ایپ\s+(.+)", "lang": "ur"},
+            ],
+            "schedule_whatsapp": [
+                # English
+                {"pattern": r"schedule\s+whatsapp\s+(?:message\s+)?to\s+(.+)", "lang": "en"},
+                {"pattern": r"send\s+whatsapp\s+later\s+to\s+(.+)", "lang": "en"},
+                # Urdu
+                {"pattern": r"واٹس\s*ایپ\s+وقت\s+پر\s+بھیجیں\s+(.+)", "lang": "ur"},
+            ],
         }
 
     def _load_entity_extractors(self) -> Dict[str, List[str]]:
@@ -268,6 +284,8 @@ class BilingualNLPProcessor:
                 "execute_command": "Command executed successfully!",
                 "trigger_n8n": "Workflow triggered successfully!",
                 "send_email": "Email sent successfully!",
+                "send_whatsapp": "WhatsApp message sent successfully!",
+                "schedule_whatsapp": "WhatsApp message scheduled successfully!",
                 "search": "Here are the search results:",
                 "unknown": "I'm not sure what you want me to do. Can you please rephrase?",
                 "error": "An error occurred: {error}",
@@ -282,6 +300,8 @@ class BilingualNLPProcessor:
                 "execute_command": "کمانڈ چل گئی!",
                 "trigger_n8n": "ورک فلو شروع ہو گیا!",
                 "send_email": "ای میل بھیج دی گئی!",
+                "send_whatsapp": "واٹس ایپ پیغام بھیج دیا گیا!",
+                "schedule_whatsapp": "واٹس ایپ پیغام شیڈول ہو گیا!",
                 "search": "تلاش کے نتائج:",
                 "unknown": "مجھے سمجھ نہیں آیا۔ برائے مہربانی دوبارہ بتائیں؟",
                 "error": "ایک خرابی واقع ہوئی: {error}",

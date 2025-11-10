@@ -71,6 +71,16 @@ class Settings(BaseSettings):
     USE_LOCAL_NLP: bool = True
     OPENAI_API_KEY: str = ""  # Optional for enhanced NLP
 
+    # WhatsApp Integration
+    WHATSAPP_ENABLED: bool = True
+    WHATSAPP_METHOD: str = "selenium"  # selenium or simple
+    WHATSAPP_SESSION_DIR: str = os.path.expanduser("~/.ai-assistant/whatsapp-session")
+    WHATSAPP_HEADLESS: bool = False  # Run browser in headless mode
+    WHATSAPP_DEFAULT_COUNTRY_CODE: str = "+92"  # Default country code for Pakistan
+    WHATSAPP_QUEUE_CHECK_INTERVAL: int = 30  # seconds
+    WHATSAPP_AUTO_START_QUEUE: bool = False  # Auto-start queue worker on startup
+    WHATSAPP_AUTHORIZED_NUMBERS: List[str] = []  # List of authorized numbers
+
     class Config:
         env_file = "ai-assistant/.env"
         case_sensitive = True

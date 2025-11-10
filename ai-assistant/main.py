@@ -10,7 +10,7 @@ import os
 
 from .core.config import settings
 from .core.database import init_db
-from .api import tasks, assistant, files, n8n
+from .api import tasks, assistant, files, n8n, whatsapp
 
 # Initialize database
 init_db()
@@ -19,7 +19,7 @@ init_db()
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="AI-powered multitasking assistant with bilingual support (English/Urdu)",
+    description="AI-powered multitasking assistant with bilingual support (English/Urdu) and WhatsApp integration",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -38,6 +38,7 @@ app.include_router(assistant.router, prefix="/api/v1")
 app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(files.router, prefix="/api/v1")
 app.include_router(n8n.router, prefix="/api/v1")
+app.include_router(whatsapp.router, prefix="/api/v1")
 
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
